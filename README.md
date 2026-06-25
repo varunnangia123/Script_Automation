@@ -25,4 +25,14 @@ Interval: 10 seconds
 
 The browser tab must stay open for monitoring to continue. GitHub Pages hosts static files only, so it cannot run checks after the tab is closed.
 
-The app fetches Yahoo Finance chart data directly from the browser and uses a public CORS proxy as a fallback. Free browser-accessible finance endpoints can change or rate-limit requests.
+## API Key
+
+This version uses Twelve Data because GitHub Pages JavaScript needs a browser-accessible API with CORS enabled.
+
+1. Get a free API key from `https://twelvedata.com/`.
+2. Paste it into the Twelve Data API Key field on the page.
+3. Start the monitor.
+
+The key is saved in your browser local storage only. Do not hard-code API keys into public GitHub files.
+
+Free API plans can rate-limit requests. A 10-second interval is 6 requests per minute for one stock while the tab is open.
