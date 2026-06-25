@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ASX Price Monitor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="monitor-panel" aria-labelledby="app-title">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">ASX Monitor</p>
+          <h1 id="app-title">Price Alert</h1>
+        </div>
+        <div class="status-pill" id="status-pill">Idle</div>
+      </div>
+
+      <form id="settings-form" class="settings-grid">
+        <label>
+          <span>Symbol</span>
+          <input id="symbol-input" name="symbol" value="XRO" autocomplete="off" spellcheck="false">
+        </label>
+
+        <label>
+          <span>Above</span>
+          <input id="threshold-input" name="threshold" type="number" value="74" min="0" step="0.01">
+        </label>
+
+        <label>
+          <span>Every</span>
+          <input id="interval-input" name="interval" type="number" value="10" min="10" step="1">
+        </label>
+
+        <div class="actions" aria-label="Monitor controls">
+          <button id="start-button" type="submit" title="Start monitoring" aria-label="Start monitoring">
+            <span aria-hidden="true">▶</span>
+          </button>
+          <button id="stop-button" type="button" title="Stop monitoring" aria-label="Stop monitoring" disabled>
+            <span aria-hidden="true">■</span>
+          </button>
+        </div>
+      </form>
+
+      <div class="price-strip" aria-live="polite">
+        <div>
+          <span class="metric-label">Last Price</span>
+          <strong id="price-output">--</strong>
+        </div>
+        <div>
+          <span class="metric-label">Checked</span>
+          <strong id="checked-output">--</strong>
+        </div>
+      </div>
+
+      <div id="alert-banner" class="alert-banner" hidden></div>
+
+      <section class="log-panel" aria-label="Monitor log">
+        <div class="log-header">
+          <span>Log</span>
+          <button id="clear-log-button" type="button" title="Clear log" aria-label="Clear log">×</button>
+        </div>
+        <ol id="log-output"></ol>
+      </section>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
