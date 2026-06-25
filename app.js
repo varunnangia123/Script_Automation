@@ -1,5 +1,6 @@
 const form = document.querySelector("#settings-form");
 const symbolInput = document.querySelector("#symbol-input");
+const apiKeyInput = document.querySelector("#api-key-input");
 const thresholdInput = document.querySelector("#threshold-input");
 const intervalInput = document.querySelector("#interval-input");
 const startButton = document.querySelector("#start-button");
@@ -15,12 +16,21 @@ let timerId = null;
 let activeConfig = null;
 let wasAboveThreshold = false;
 
+const savedApiKey = window.localStorage.getItem("twelveDataApiKey");
+if (savedApiKey) {
+  apiKeyInput.value = savedApiKey;
+}
+
 function normaliseAsxSymbol(value) {
   const symbol = value.trim().toUpperCase();
   if (!symbol) {
     return "XRO.AX";
   }
   return symbol.endsWith(".AX") ? symbol : `${symbol}.AX`;
+}
+
+function toTwelveDataSymbol(symbol) {
+  return `${symbol.replace(/\.AX$/u, "")}:ASX`;
 }
 
 function setStatus(text, state = "idle") {
@@ -62,49 +72,22 @@ async function fetchJson(url) {
   return response.json();
 }
 
-async function fetchYahooPrice(symbol) {
-  const encodedSymbol = encodeURIComponent(symbol);
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}?range=1d&interval=1m`;
+async function getLatestPrice(apiSymbol, apiKey) {
+  const encodedSymbol = encodeURIComponent(apiSymbol);
+  const encodedApiKey = encodeURIComponent(apiKey);
+  const url = `https://api.twelvedata.com/price?symbol=${encodedSymbol}&apikey=${encodedApiKey}`;
   const data = await fetchJson(url);
-  const result = data?.chart?.result?.[0];
-  const meta = result?.meta;
-  const closes = result?.indicators?.quote?.[0]?.close ?? [];
-  const latestClose = [...closes].reverse().find((value) => Number.isFinite(value));
-  const price = meta?.regularMarketPrice ?? latestClose;
 
+  if (data.status === "error") {
+    throw new Error(data.message || "Twelve Data returned an error");
+  }
+
+  const price = Number(data.price);
   if (!Number.isFinite(price)) {
-    throw new Error("No Yahoo price returned");
+    throw new Error("No price returned");
   }
 
-  return Number(price);
-}
-
-async function fetchYahooPriceViaProxy(symbol) {
-  const encodedYahooUrl = encodeURIComponent(
-    `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=1d&interval=1m`
-  );
-  const proxyUrl = `https://api.allorigins.win/raw?url=${encodedYahooUrl}`;
-  const data = await fetchJson(proxyUrl);
-  const result = data?.chart?.result?.[0];
-  const meta = result?.meta;
-  const closes = result?.indicators?.quote?.[0]?.close ?? [];
-  const latestClose = [...closes].reverse().find((value) => Number.isFinite(value));
-  const price = meta?.regularMarketPrice ?? latestClose;
-
-  if (!Number.isFinite(price)) {
-    throw new Error("No proxy price returned");
-  }
-
-  return Number(price);
-}
-
-async function getLatestPrice(symbol) {
-  try {
-    return await fetchYahooPrice(symbol);
-  } catch (directError) {
-    addLog(`Direct quote failed: ${directError.message}`);
-    return fetchYahooPriceViaProxy(symbol);
-  }
+  return price;
 }
 
 async function ensureNotificationPermission() {
@@ -118,7 +101,7 @@ async function ensureNotificationPermission() {
   }
 
   if (Notification.permission === "denied") {
-    addLog("Browser notifications are blocked");
+    addLog("Browser notifications are blocked; page alerts still work");
     return false;
   }
 
@@ -143,10 +126,10 @@ async function checkPrice() {
     return;
   }
 
-  const { symbol, threshold } = activeConfig;
+  const { symbol, apiSymbol, apiKey, threshold } = activeConfig;
 
   try {
-    const price = await getLatestPrice(symbol);
+    const price = await getLatestPrice(apiSymbol, apiKey);
     const checkedAt = formatTime();
 
     priceOutput.textContent = `$${price.toFixed(2)}`;
@@ -175,12 +158,21 @@ async function startMonitor(event) {
   stopMonitor(false);
 
   const symbol = normaliseAsxSymbol(symbolInput.value);
+  const apiSymbol = toTwelveDataSymbol(symbol);
+  const apiKey = apiKeyInput.value.trim();
   const threshold = Number(thresholdInput.value || 74);
   const intervalSeconds = Math.max(10, Number(intervalInput.value || 10));
 
+  if (!apiKey) {
+    setStatus("Error");
+    addLog("Enter a Twelve Data API key before starting");
+    return;
+  }
+
   symbolInput.value = symbol;
   intervalInput.value = intervalSeconds;
-  activeConfig = { symbol, threshold, intervalSeconds };
+  window.localStorage.setItem("twelveDataApiKey", apiKey);
+  activeConfig = { symbol, apiSymbol, apiKey, threshold, intervalSeconds };
   wasAboveThreshold = false;
 
   startButton.disabled = true;
