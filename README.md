@@ -36,3 +36,5 @@ This version uses Twelve Data because GitHub Pages JavaScript needs a browser-ac
 The key is saved in your browser local storage only. Do not hard-code API keys into public GitHub files.
 
 Free API plans can rate-limit requests. A 10-second interval is 6 requests per minute for one stock while the tab is open.
+
+This web version shows alerts inside the page and does not request browser notification permission.
