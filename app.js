@@ -10,23 +10,18 @@ const priceOutput = document.querySelector("#price-output");
 const checkedOutput = document.querySelector("#checked-output");
 const alertBanner = document.querySelector("#alert-banner");
 const logOutput = document.querySelector("#log-output");
+const sharePointForm = document.querySelector("#sharepoint-form");
+const sharePointLinkInput = document.querySelector("#sharepoint-link-input");
+const sharePointLoadButton = document.querySelector("#sharepoint-load-button");
+const sharePointStatus = document.querySelector("#sharepoint-status");
+const sharePointMessage = document.querySelector("#sharepoint-message");
+const sharePointTable = document.querySelector("#sharepoint-table");
 
 let timerId = null;
 let activeConfig = null;
-let marketWasOpen = null;
 
 const DEFAULT_SYMBOLS = ["WTC.AX", "XRO.AX"];
-const ASX_TIMEZONE = "Australia/Sydney";
-const ASX_MARKET_OPEN_MINUTES = 10 * 60;
-const ASX_MARKET_CLOSE_MINUTES = 16 * 60;
 const NO_KEY_PROXY_PREFIX = "https://r.jina.ai/http://";
-const asxTimeFormatter = new Intl.DateTimeFormat("en-AU", {
-  timeZone: ASX_TIMEZONE,
-  weekday: "short",
-  hour: "2-digit",
-  minute: "2-digit",
-  hourCycle: "h23"
-});
 
 function normaliseAsxSymbols(value) {
   const symbols = value
@@ -43,7 +38,6 @@ function setStatus(text, state = "idle") {
   statusPill.textContent = text;
   statusPill.classList.toggle("running", state === "running");
   statusPill.classList.toggle("alerting", state === "alerting");
-  statusPill.classList.toggle("closed", state === "closed");
 }
 
 function formatTime(date = new Date()) {
@@ -131,20 +125,6 @@ async function getLatestPrices(symbols) {
   return prices;
 }
 
-function isAsxMarketOpen(date = new Date()) {
-  const parts = Object.fromEntries(
-    asxTimeFormatter.formatToParts(date).map((part) => [part.type, part.value])
-  );
-  const weekday = parts.weekday;
-  const minutes = Number(parts.hour) * 60 + Number(parts.minute);
-
-  if (["Sat", "Sun"].includes(weekday)) {
-    return false;
-  }
-
-  return minutes >= ASX_MARKET_OPEN_MINUTES && minutes < ASX_MARKET_CLOSE_MINUTES;
-}
-
 function sendPriceAlert(messages) {
   const message = messages.join(" | ");
   alertBanner.textContent = message;
@@ -159,21 +139,6 @@ async function checkPrice() {
   }
 
   const { symbols, threshold, aboveThresholdBySymbol } = activeConfig;
-
-  if (!isAsxMarketOpen()) {
-    if (marketWasOpen !== false) {
-      addLog("ASX market is closed; waiting to check prices");
-    }
-    marketWasOpen = false;
-    checkedOutput.textContent = formatTime();
-    setStatus("Closed", "closed");
-    return;
-  }
-
-  if (marketWasOpen !== true) {
-    addLog("ASX market is open; checking prices");
-    marketWasOpen = true;
-  }
 
   try {
     const prices = await getLatestPrices(symbols);
@@ -239,16 +204,215 @@ async function startMonitor(event) {
     intervalSeconds,
     aboveThresholdBySymbol: new Map(symbols.map((symbol) => [symbol, false]))
   };
-  marketWasOpen = null;
 
   startButton.disabled = true;
   stopButton.disabled = false;
   alertBanner.hidden = true;
   setStatus("Running", "running");
 
-  addLog(`Started ${symbols.join(", ")}, above $${threshold.toFixed(2)}, every ${intervalSeconds}s, ASX hours only`);
+  addLog(`Started ${symbols.join(", ")}, above $${threshold.toFixed(2)}, every ${intervalSeconds}s`);
   await checkPrice();
   timerId = window.setInterval(checkPrice, intervalSeconds * 1000);
+}
+
+function setSharePointStatus(text, state = "idle") {
+  sharePointStatus.textContent = text;
+  sharePointStatus.classList.toggle("running", state === "running");
+  sharePointStatus.classList.toggle("alerting", state === "error");
+}
+
+function setSharePointMessage(message, isError = false) {
+  sharePointMessage.textContent = message;
+  sharePointMessage.hidden = !message;
+  sharePointMessage.classList.toggle("error", isError);
+}
+
+function buildSharePointRequestUrls(rawUrl) {
+  const parsedUrl = new URL(rawUrl);
+  const urls = [parsedUrl.href];
+  const listId = parsedUrl.searchParams.get("List")?.replace(/[{}]/gu, "");
+  const listsIndex = parsedUrl.pathname.toLowerCase().indexOf("/lists/");
+
+  if (listsIndex !== -1) {
+    const sitePath = parsedUrl.pathname.slice(0, listsIndex) || "/";
+    const listPathParts = parsedUrl.pathname.slice(listsIndex).split("/").slice(0, 3);
+    const listPath = `${sitePath}${listPathParts.join("/")}`.replace(/\/+/gu, "/");
+    const encodedListPath = encodeURIComponent(`'${decodeURIComponent(listPath)}'`);
+    urls.unshift(`${parsedUrl.origin}${sitePath}/_api/web/GetList(@listUrl)/items?$top=50&@listUrl=${encodedListPath}`);
+  }
+
+  if (listId) {
+    const sitePath = listsIndex === -1 ? parsedUrl.pathname.split("/_layouts/")[0] || "/" : parsedUrl.pathname.slice(0, listsIndex);
+    urls.unshift(`${parsedUrl.origin}${sitePath}/_api/web/lists(guid'${listId}')/items?$top=50`);
+  }
+
+  return [...new Set(urls)];
+}
+
+async function fetchSharePointRows(rawUrl) {
+  const urls = buildSharePointRequestUrls(rawUrl);
+  const errors = [];
+
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, {
+        cache: "no-store",
+        credentials: "include",
+        headers: { Accept: "application/json;odata=nometadata,text/csv,text/plain,*/*" }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const contentType = response.headers.get("content-type") || "";
+      const text = await response.text();
+      return rowsFromResponse(text, contentType);
+    } catch (error) {
+      errors.push(`${url}: ${error.message}`);
+    }
+  }
+
+  throw new Error(errors.at(-1) || "Could not read SharePoint list");
+}
+
+function rowsFromResponse(text, contentType) {
+  const trimmedText = text.trim();
+  if (!trimmedText) {
+    return [];
+  }
+
+  if (contentType.includes("json") || trimmedText.startsWith("{") || trimmedText.startsWith("[")) {
+    const data = JSON.parse(trimmedText);
+    if (Array.isArray(data)) {
+      return data;
+    }
+    if (Array.isArray(data.value)) {
+      return data.value;
+    }
+    if (Array.isArray(data.d?.results)) {
+      return data.d.results;
+    }
+    return [data];
+  }
+
+  if (contentType.includes("csv") || trimmedText.includes(",")) {
+    return rowsFromCsv(trimmedText);
+  }
+
+  throw new Error("No JSON or CSV list data returned");
+}
+
+function rowsFromCsv(text) {
+  const lines = parseCsv(text);
+  const headers = lines.shift() || [];
+  return lines.map((line) => Object.fromEntries(headers.map((header, index) => [header, line[index] ?? ""])));
+}
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let value = "";
+  let insideQuotes = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    const nextChar = text[index + 1];
+
+    if (char === '"' && insideQuotes && nextChar === '"') {
+      value += '"';
+      index += 1;
+    } else if (char === '"') {
+      insideQuotes = !insideQuotes;
+    } else if (char === "," && !insideQuotes) {
+      row.push(value);
+      value = "";
+    } else if ((char === "\n" || char === "\r") && !insideQuotes) {
+      if (char === "\r" && nextChar === "\n") {
+        index += 1;
+      }
+      row.push(value);
+      rows.push(row);
+      row = [];
+      value = "";
+    } else {
+      value += char;
+    }
+  }
+
+  if (value || row.length > 0) {
+    row.push(value);
+    rows.push(row);
+  }
+
+  return rows.filter((candidateRow) => candidateRow.some((cell) => cell.trim()));
+}
+
+function renderSharePointRows(rows) {
+  sharePointTable.replaceChildren();
+
+  if (rows.length === 0) {
+    setSharePointMessage("No rows returned.");
+    return;
+  }
+
+  const visibleRows = rows.slice(0, 25);
+  const columns = [...new Set(visibleRows.flatMap((row) => Object.keys(row)))].slice(0, 8);
+  const thead = document.createElement("thead");
+  const headerRow = document.createElement("tr");
+
+  columns.forEach((column) => {
+    const header = document.createElement("th");
+    header.textContent = column;
+    headerRow.append(header);
+  });
+
+  thead.append(headerRow);
+
+  const tbody = document.createElement("tbody");
+  visibleRows.forEach((row) => {
+    const tableRow = document.createElement("tr");
+    columns.forEach((column) => {
+      const cell = document.createElement("td");
+      const value = row[column];
+      cell.textContent = value === null || value === undefined ? "" : String(value);
+      tableRow.append(cell);
+    });
+    tbody.append(tableRow);
+  });
+
+  sharePointTable.append(thead, tbody);
+  setSharePointMessage(`Loaded ${rows.length} row${rows.length === 1 ? "" : "s"}.`);
+}
+
+async function loadSharePointList(event) {
+  event.preventDefault();
+  const link = sharePointLinkInput.value.trim();
+
+  if (!link) {
+    setSharePointStatus("Error", "error");
+    setSharePointMessage("Enter a SharePoint list link first.", true);
+    return;
+  }
+
+  sharePointLoadButton.disabled = true;
+  setSharePointStatus("Loading", "running");
+  setSharePointMessage("");
+  sharePointTable.replaceChildren();
+
+  try {
+    const rows = await fetchSharePointRows(link);
+    renderSharePointRows(rows);
+    setSharePointStatus("Loaded", "running");
+  } catch (error) {
+    setSharePointStatus("Error", "error");
+    setSharePointMessage(
+      `${error.message}. Protected SharePoint lists usually need Microsoft sign-in/OAuth or a JSON/CSV export link that allows browser access.`,
+      true
+    );
+  } finally {
+    sharePointLoadButton.disabled = false;
+  }
 }
 
 function stopMonitor(writeLog = true) {
@@ -272,3 +436,4 @@ stopButton.addEventListener("click", () => stopMonitor(true));
 clearLogButton.addEventListener("click", () => {
   logOutput.replaceChildren();
 });
+sharePointForm.addEventListener("submit", loadSharePointList);

@@ -21,7 +21,7 @@ The page defaults to:
 Symbols: WTC.AX, XRO.AX
 Threshold: 74
 Interval: 60 seconds
-Schedule: ASX market hours only, Monday-Friday 10:00-16:00 Australia/Sydney
+Schedule: runs every 60 seconds while the page is open
 ```
 
 The browser tab must stay open for monitoring to continue. GitHub Pages hosts static files only, so it cannot run checks after the tab is closed.
@@ -32,6 +32,12 @@ This version does not use API keys.
 
 The page reads Yahoo Finance chart data through the public Jina Reader route so it can run from GitHub Pages without a backend server.
 
-The default 60-second interval checks two stocks during ASX market hours, which is roughly 720 no-key quote requests on a normal trading day while the tab is open. Public no-key routes can rate-limit or change without notice.
+The default 60-second interval checks two stocks while the tab is open. Public no-key routes can rate-limit or change without notice.
 
 This web version shows alerts inside the page and does not request browser notification permission.
+
+## SharePoint List Reader
+
+The page has a SharePoint List Reader section. Paste a SharePoint list URL, JSON URL, or CSV export URL and press Load.
+
+Protected SharePoint lists may be blocked by Microsoft sign-in, CORS, or tenant policy when loaded from GitHub Pages. In that case, use a JSON/CSV export link that allows browser access, or use a small authenticated backend/Microsoft Graph app.

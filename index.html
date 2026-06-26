@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ASX Price Monitor</title>
-  <link rel="stylesheet" href="styles.css?v=20260626-4">
+  <link rel="stylesheet" href="styles.css?v=20260626-5">
 </head>
 <body>
   <main class="app-shell">
@@ -64,8 +64,32 @@
         <ol id="log-output"></ol>
       </section>
     </section>
+
+    <section class="sharepoint-panel" aria-labelledby="sharepoint-title">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">SharePoint</p>
+            <h2 id="sharepoint-title">List Reader</h2>
+          </div>
+          <div class="status-pill" id="sharepoint-status">Idle</div>
+        </div>
+
+        <form id="sharepoint-form" class="sharepoint-form">
+          <label>
+            <span>List Link</span>
+            <input id="sharepoint-link-input" name="sharepointLink" type="url" autocomplete="off" spellcheck="false">
+          </label>
+
+          <button id="sharepoint-load-button" type="submit">Load</button>
+        </form>
+
+        <div id="sharepoint-message" class="sharepoint-message" hidden></div>
+        <div class="sharepoint-table-wrap">
+          <table id="sharepoint-table"></table>
+        </div>
+    </section>
   </main>
 
-  <script src="app.js?v=20260626-4"></script>
+  <script src="app.js?v=20260626-5"></script>
 </body>
 </html>
