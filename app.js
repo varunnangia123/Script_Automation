@@ -66,10 +66,14 @@ function addLog(message) {
 
 async function fetchJson(url) {
   const response = await fetch(url, { cache: "no-store" });
+  const data = await response.json().catch(() => null);
+
   if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
+    const message = data?.message || data?.status || `HTTP ${response.status}`;
+    throw new Error(message);
   }
-  return response.json();
+
+  return data;
 }
 
 async function getLatestPrice(apiSymbol, apiKey) {
@@ -90,35 +94,12 @@ async function getLatestPrice(apiSymbol, apiKey) {
   return price;
 }
 
-async function ensureNotificationPermission() {
-  if (!("Notification" in window)) {
-    addLog("Browser notifications are unavailable");
-    return false;
-  }
-
-  if (Notification.permission === "granted") {
-    return true;
-  }
-
-  if (Notification.permission === "denied") {
-    addLog("Browser notifications are blocked; page alerts still work");
-    return false;
-  }
-
-  const permission = await Notification.requestPermission();
-  return permission === "granted";
-}
-
 function sendPriceAlert(symbol, price, threshold) {
   const message = `${symbol} is $${price.toFixed(2)}, above $${threshold.toFixed(2)}`;
   alertBanner.textContent = message;
   alertBanner.hidden = false;
   setStatus("Alert", "alerting");
   addLog(message);
-
-  if ("Notification" in window && Notification.permission === "granted") {
-    new Notification("ASX Price Alert", { body: message });
-  }
 }
 
 async function checkPrice() {
@@ -180,7 +161,6 @@ async function startMonitor(event) {
   alertBanner.hidden = true;
   setStatus("Running", "running");
 
-  await ensureNotificationPermission();
   addLog(`Started ${symbol}, above $${threshold.toFixed(2)}, every ${intervalSeconds}s`);
   await checkPrice();
   timerId = window.setInterval(checkPrice, intervalSeconds * 1000);
