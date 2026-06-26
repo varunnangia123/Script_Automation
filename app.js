@@ -21,6 +21,7 @@ let timerId = null;
 let activeConfig = null;
 
 const DEFAULT_SYMBOLS = ["WTC.AX", "XRO.AX"];
+const DEFAULT_CHECK_INTERVAL_SECONDS = 10;
 const NO_KEY_PROXY_PREFIX = "https://r.jina.ai/http://";
 
 function normaliseAsxSymbols(value) {
@@ -194,7 +195,10 @@ async function startMonitor(event) {
 
   const symbols = normaliseAsxSymbols(symbolInput.value);
   const threshold = Number(thresholdInput.value || 74);
-  const intervalSeconds = Math.max(60, Number(intervalInput.value || 60));
+  const intervalSeconds = Math.max(
+    DEFAULT_CHECK_INTERVAL_SECONDS,
+    Number(intervalInput.value || DEFAULT_CHECK_INTERVAL_SECONDS)
+  );
 
   symbolInput.value = symbols.join(", ");
   intervalInput.value = intervalSeconds;
@@ -212,7 +216,19 @@ async function startMonitor(event) {
 
   addLog(`Started ${symbols.join(", ")}, above $${threshold.toFixed(2)}, every ${intervalSeconds}s`);
   await checkPrice();
-  timerId = window.setInterval(checkPrice, intervalSeconds * 1000);
+  scheduleNextCheck();
+}
+
+function scheduleNextCheck() {
+  if (!activeConfig) {
+    return;
+  }
+
+  timerId = window.setTimeout(async () => {
+    timerId = null;
+    await checkPrice();
+    scheduleNextCheck();
+  }, activeConfig.intervalSeconds * 1000);
 }
 
 function setSharePointStatus(text, state = "idle") {
@@ -417,7 +433,7 @@ async function loadSharePointList(event) {
 
 function stopMonitor(writeLog = true) {
   if (timerId !== null) {
-    window.clearInterval(timerId);
+    window.clearTimeout(timerId);
     timerId = null;
   }
 
