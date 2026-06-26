@@ -24,6 +24,11 @@ const DEFAULT_SYMBOLS = ["WTC.AX", "XRO.AX"];
 const DEFAULT_CHECK_INTERVAL_SECONDS = 10;
 const NO_KEY_PROXY_PREFIX = "https://r.jina.ai/http://";
 
+intervalInput.min = String(DEFAULT_CHECK_INTERVAL_SECONDS);
+if (Number(intervalInput.value) < DEFAULT_CHECK_INTERVAL_SECONDS) {
+  intervalInput.value = String(DEFAULT_CHECK_INTERVAL_SECONDS);
+}
+
 function normaliseAsxSymbols(value) {
   const symbols = value
     .split(/[\s,]+/u)
