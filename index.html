@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SharePoint List Monitor</title>
+  <link rel="stylesheet" href="styles.css?v=20260627-1">
+  <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js" defer></script>
+  <script src="app.js?v=20260627-1" defer></script>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="hero" aria-labelledby="app-title">
+      <div>
+        <p class="eyebrow">GitHub Pages SharePoint Monitor</p>
+        <h1 id="app-title">Watch a list column for the value that matters.</h1>
+      </div>
+      <div class="status-card" aria-live="polite">
+        <span>Status</span>
+        <strong id="status-output">Not connected</strong>
+      </div>
+    </section>
+
+    <section class="control-panel" aria-label="Monitor configuration">
+      <form id="monitor-form" class="monitor-form">
+        <div class="form-section">
+          <div class="section-title">
+            <span>1</span>
+            <h2>Microsoft Graph Sign-In</h2>
+          </div>
+
+          <div class="field-grid two-columns">
+            <label>
+              <span>Tenant ID or domain</span>
+              <input id="tenant-input" name="tenant" autocomplete="off" spellcheck="false" placeholder="contoso.onmicrosoft.com">
+            </label>
+
+            <label>
+              <span>Application client ID</span>
+              <input id="client-input" name="clientId" autocomplete="off" spellcheck="false" placeholder="00000000-0000-0000-0000-000000000000">
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <span>2</span>
+            <h2>SharePoint List</h2>
+          </div>
+
+          <label>
+            <span>SharePoint list URL</span>
+            <input id="list-url-input" name="listUrl" type="url" autocomplete="off" spellcheck="false" placeholder="https://utilnsw.sharepoint.com/teams/PortfolioReporting/Lists/Change%20Requests/AllItems.aspx">
+          </label>
+
+          <div class="field-grid three-columns">
+            <label>
+              <span>SharePoint host</span>
+              <input id="host-input" name="host" autocomplete="off" spellcheck="false" placeholder="utilnsw.sharepoint.com">
+            </label>
+
+            <label>
+              <span>Site path</span>
+              <input id="site-path-input" name="sitePath" autocomplete="off" spellcheck="false" placeholder="/teams/PortfolioReporting">
+            </label>
+
+            <label>
+              <span>List name or ID</span>
+              <input id="list-input" name="list" autocomplete="off" spellcheck="false" placeholder="Change Requests">
+            </label>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="section-title">
+            <span>3</span>
+            <h2>Column Match</h2>
+          </div>
+
+          <div class="field-grid monitor-columns">
+            <label>
+              <span>Column internal name</span>
+              <input id="column-input" name="column" autocomplete="off" spellcheck="false" placeholder="Status">
+            </label>
+
+            <label>
+              <span>Value to match</span>
+              <input id="value-input" name="value" autocomplete="off" spellcheck="false" placeholder="Approved">
+            </label>
+
+            <label>
+              <span>Refresh seconds</span>
+              <input id="refresh-input" name="refresh" type="number" min="10" step="1" value="10">
+            </label>
+
+            <label>
+              <span>Columns to show</span>
+              <input id="columns-input" name="columns" autocomplete="off" spellcheck="false" placeholder="Title, Status, Modified">
+            </label>
+          </div>
+        </div>
+
+        <div class="button-row" aria-label="Monitor actions">
+          <button id="sign-in-button" type="button">Sign in</button>
+          <button id="start-button" type="submit">Start monitor</button>
+          <button id="stop-button" type="button" disabled>Stop</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="results-panel" aria-labelledby="results-title">
+      <div class="results-header">
+        <div>
+          <p class="eyebrow">Live Results</p>
+          <h2 id="results-title">Matching Rows</h2>
+        </div>
+
+        <div class="metrics" aria-live="polite">
+          <div>
+            <span>Matches</span>
+            <strong id="match-count-output">0</strong>
+          </div>
+          <div>
+            <span>Last checked</span>
+            <strong id="last-checked-output">--</strong>
+          </div>
+          <div>
+            <span>Next refresh</span>
+            <strong id="next-refresh-output">--</strong>
+          </div>
+        </div>
+      </div>
+
+      <div id="message-output" class="message" hidden></div>
+
+      <div class="table-wrap">
+        <table id="results-table">
+          <thead>
+            <tr>
+              <th>Waiting for monitor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Enter your SharePoint and Graph details, then start the monitor.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
