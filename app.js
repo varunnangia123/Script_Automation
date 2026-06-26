@@ -1,6 +1,5 @@
 const form = document.querySelector("#settings-form");
 const symbolInput = document.querySelector("#symbol-input");
-const apiKeyInput = document.querySelector("#api-key-input");
 const thresholdInput = document.querySelector("#threshold-input");
 const intervalInput = document.querySelector("#interval-input");
 const startButton = document.querySelector("#start-button");
@@ -20,6 +19,7 @@ const DEFAULT_SYMBOLS = ["WTC.AX", "XRO.AX"];
 const ASX_TIMEZONE = "Australia/Sydney";
 const ASX_MARKET_OPEN_MINUTES = 10 * 60;
 const ASX_MARKET_CLOSE_MINUTES = 16 * 60;
+const NO_KEY_PROXY_PREFIX = "https://r.jina.ai/http://";
 const asxTimeFormatter = new Intl.DateTimeFormat("en-AU", {
   timeZone: ASX_TIMEZONE,
   weekday: "short",
@@ -27,11 +27,6 @@ const asxTimeFormatter = new Intl.DateTimeFormat("en-AU", {
   minute: "2-digit",
   hourCycle: "h23"
 });
-
-const savedApiKey = window.localStorage.getItem("twelveDataApiKey");
-if (savedApiKey) {
-  apiKeyInput.value = savedApiKey;
-}
 
 function normaliseAsxSymbols(value) {
   const symbols = value
@@ -42,10 +37,6 @@ function normaliseAsxSymbols(value) {
 
   const uniqueSymbols = [...new Set(symbols)];
   return uniqueSymbols.length > 0 ? uniqueSymbols : DEFAULT_SYMBOLS;
-}
-
-function toTwelveDataSymbol(symbol) {
-  return `${symbol.replace(/\.AX$/u, "")}:ASX`;
 }
 
 function setStatus(text, state = "idle") {
@@ -80,51 +71,61 @@ function addLog(message) {
   }
 }
 
-async function fetchJson(url) {
+async function fetchText(url) {
   const response = await fetch(url, { cache: "no-store" });
-  const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    const message = data?.message || data?.status || `HTTP ${response.status}`;
-    throw new Error(message);
+    throw new Error(`HTTP ${response.status}`);
   }
 
-  return data;
+  return response.text();
 }
 
-async function getLatestPrices(apiSymbols, apiKey) {
-  const encodedSymbol = encodeURIComponent(apiSymbols.join(","));
-  const encodedApiKey = encodeURIComponent(apiKey);
-  const url = `https://api.twelvedata.com/price?symbol=${encodedSymbol}&apikey=${encodedApiKey}`;
-  const data = await fetchJson(url);
+function yahooChartUrl(symbol) {
+  return `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1m`;
+}
 
-  if (data.status === "error") {
-    throw new Error(data.message || "Twelve Data returned an error");
+function extractYahooChartPayload(text) {
+  const marker = "Markdown Content:";
+  const payloadText = text.includes(marker) ? text.split(marker)[1].trim() : text.trim();
+  const jsonStart = payloadText.indexOf('{"chart"');
+
+  if (jsonStart === -1) {
+    throw new Error("No quote payload returned");
   }
 
-  if (apiSymbols.length === 1) {
-    const price = Number(data.price);
-    if (!Number.isFinite(price)) {
-      throw new Error("No price returned");
-    }
-    return new Map([[apiSymbols[0], price]]);
+  return JSON.parse(payloadText.slice(jsonStart));
+}
+
+function priceFromYahooChart(data) {
+  const result = data?.chart?.result?.[0];
+  const metaPrice = Number(result?.meta?.regularMarketPrice);
+
+  if (Number.isFinite(metaPrice) && metaPrice > 0) {
+    return metaPrice;
   }
 
-  const prices = new Map();
-  for (const apiSymbol of apiSymbols) {
-    const item = data[apiSymbol];
-    if (item?.status === "error") {
-      throw new Error(`${apiSymbol}: ${item.message || "Twelve Data returned an error"}`);
-    }
-
-    const price = Number(item?.price);
+  const closes = result?.indicators?.quote?.[0]?.close ?? [];
+  for (const closePrice of [...closes].reverse()) {
+    const price = Number(closePrice);
     if (Number.isFinite(price)) {
-      prices.set(apiSymbol, price);
+      return price;
     }
   }
 
-  if (prices.size === 0) {
-    throw new Error("No prices returned");
+  throw new Error("No usable price returned");
+}
+
+async function getLatestPrice(symbol) {
+  const text = await fetchText(`${NO_KEY_PROXY_PREFIX}${yahooChartUrl(symbol)}`);
+  return priceFromYahooChart(extractYahooChartPayload(text));
+}
+
+async function getLatestPrices(symbols) {
+  const prices = new Map();
+
+  for (const symbol of symbols) {
+    prices.set(symbol, await getLatestPrice(symbol));
   }
 
   return prices;
@@ -157,7 +158,7 @@ async function checkPrice() {
     return;
   }
 
-  const { symbols, apiSymbols, apiKey, threshold, aboveThresholdBySymbol } = activeConfig;
+  const { symbols, threshold, aboveThresholdBySymbol } = activeConfig;
 
   if (!isAsxMarketOpen()) {
     if (marketWasOpen !== false) {
@@ -175,15 +176,14 @@ async function checkPrice() {
   }
 
   try {
-    const prices = await getLatestPrices(apiSymbols, apiKey);
+    const prices = await getLatestPrices(symbols);
     const checkedAt = formatTime();
     const priceLines = [];
     const newAlerts = [];
     const aboveNow = [];
 
     symbols.forEach((symbol, index) => {
-      const apiSymbol = apiSymbols[index];
-      const price = prices.get(apiSymbol);
+      const price = prices.get(symbol);
       if (!Number.isFinite(price)) {
         addLog(`No price returned for ${symbol}`);
         return;
@@ -228,24 +228,13 @@ async function startMonitor(event) {
   stopMonitor(false);
 
   const symbols = normaliseAsxSymbols(symbolInput.value);
-  const apiSymbols = symbols.map(toTwelveDataSymbol);
-  const apiKey = apiKeyInput.value.trim();
   const threshold = Number(thresholdInput.value || 74);
   const intervalSeconds = Math.max(60, Number(intervalInput.value || 60));
 
-  if (!apiKey) {
-    setStatus("Error");
-    addLog("Enter a Twelve Data API key before starting");
-    return;
-  }
-
   symbolInput.value = symbols.join(", ");
   intervalInput.value = intervalSeconds;
-  window.localStorage.setItem("twelveDataApiKey", apiKey);
   activeConfig = {
     symbols,
-    apiSymbols,
-    apiKey,
     threshold,
     intervalSeconds,
     aboveThresholdBySymbol: new Map(symbols.map((symbol) => [symbol, false]))

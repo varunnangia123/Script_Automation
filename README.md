@@ -26,16 +26,12 @@ Schedule: ASX market hours only, Monday-Friday 10:00-16:00 Australia/Sydney
 
 The browser tab must stay open for monitoring to continue. GitHub Pages hosts static files only, so it cannot run checks after the tab is closed.
 
-## API Key
+## Data Source
 
-This version uses Twelve Data because GitHub Pages JavaScript needs a browser-accessible API with CORS enabled.
+This version does not use API keys.
 
-1. Get a free API key from `https://twelvedata.com/`.
-2. Paste it into the Twelve Data API Key field on the page.
-3. Start the monitor.
+The page reads Yahoo Finance chart data through the public Jina Reader route so it can run from GitHub Pages without a backend server.
 
-The key is saved in your browser local storage only. Do not hard-code API keys into public GitHub files.
-
-Free API plans can rate-limit requests. The default 60-second interval checks two stocks in a single batched request during ASX market hours, which is roughly 360 requests on a normal trading day while the tab is open.
+The default 60-second interval checks two stocks during ASX market hours, which is roughly 720 no-key quote requests on a normal trading day while the tab is open. Public no-key routes can rate-limit or change without notice.
 
 This web version shows alerts inside the page and does not request browser notification permission.
