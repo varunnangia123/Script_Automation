@@ -85,6 +85,11 @@ h1 {
   color: #963b19;
 }
 
+.status-pill.closed {
+  background: #edf0f5;
+  color: #465365;
+}
+
 .settings-grid {
   display: grid;
   grid-template-columns: minmax(130px, 0.9fr) minmax(230px, 1.25fr) minmax(100px, 0.65fr) minmax(100px, 0.65fr) auto;
@@ -166,6 +171,7 @@ button:disabled {
   font-size: clamp(1.3rem, 5vw, 2.6rem);
   line-height: 1.1;
   letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 
 .alert-banner {

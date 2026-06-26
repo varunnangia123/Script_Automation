@@ -14,19 +14,34 @@ const logOutput = document.querySelector("#log-output");
 
 let timerId = null;
 let activeConfig = null;
-let wasAboveThreshold = false;
+let marketWasOpen = null;
+
+const DEFAULT_SYMBOLS = ["WTC.AX", "XRO.AX"];
+const ASX_TIMEZONE = "Australia/Sydney";
+const ASX_MARKET_OPEN_MINUTES = 10 * 60;
+const ASX_MARKET_CLOSE_MINUTES = 16 * 60;
+const asxTimeFormatter = new Intl.DateTimeFormat("en-AU", {
+  timeZone: ASX_TIMEZONE,
+  weekday: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23"
+});
 
 const savedApiKey = window.localStorage.getItem("twelveDataApiKey");
 if (savedApiKey) {
   apiKeyInput.value = savedApiKey;
 }
 
-function normaliseAsxSymbol(value) {
-  const symbol = value.trim().toUpperCase();
-  if (!symbol) {
-    return "XRO.AX";
-  }
-  return symbol.endsWith(".AX") ? symbol : `${symbol}.AX`;
+function normaliseAsxSymbols(value) {
+  const symbols = value
+    .split(/[\s,]+/u)
+    .map((symbol) => symbol.trim().toUpperCase())
+    .filter(Boolean)
+    .map((symbol) => symbol.endsWith(".AX") ? symbol : `${symbol}.AX`);
+
+  const uniqueSymbols = [...new Set(symbols)];
+  return uniqueSymbols.length > 0 ? uniqueSymbols : DEFAULT_SYMBOLS;
 }
 
 function toTwelveDataSymbol(symbol) {
@@ -37,6 +52,7 @@ function setStatus(text, state = "idle") {
   statusPill.textContent = text;
   statusPill.classList.toggle("running", state === "running");
   statusPill.classList.toggle("alerting", state === "alerting");
+  statusPill.classList.toggle("closed", state === "closed");
 }
 
 function formatTime(date = new Date()) {
@@ -76,8 +92,8 @@ async function fetchJson(url) {
   return data;
 }
 
-async function getLatestPrice(apiSymbol, apiKey) {
-  const encodedSymbol = encodeURIComponent(apiSymbol);
+async function getLatestPrices(apiSymbols, apiKey) {
+  const encodedSymbol = encodeURIComponent(apiSymbols.join(","));
   const encodedApiKey = encodeURIComponent(apiKey);
   const url = `https://api.twelvedata.com/price?symbol=${encodedSymbol}&apikey=${encodedApiKey}`;
   const data = await fetchJson(url);
@@ -86,16 +102,50 @@ async function getLatestPrice(apiSymbol, apiKey) {
     throw new Error(data.message || "Twelve Data returned an error");
   }
 
-  const price = Number(data.price);
-  if (!Number.isFinite(price)) {
-    throw new Error("No price returned");
+  if (apiSymbols.length === 1) {
+    const price = Number(data.price);
+    if (!Number.isFinite(price)) {
+      throw new Error("No price returned");
+    }
+    return new Map([[apiSymbols[0], price]]);
   }
 
-  return price;
+  const prices = new Map();
+  for (const apiSymbol of apiSymbols) {
+    const item = data[apiSymbol];
+    if (item?.status === "error") {
+      throw new Error(`${apiSymbol}: ${item.message || "Twelve Data returned an error"}`);
+    }
+
+    const price = Number(item?.price);
+    if (Number.isFinite(price)) {
+      prices.set(apiSymbol, price);
+    }
+  }
+
+  if (prices.size === 0) {
+    throw new Error("No prices returned");
+  }
+
+  return prices;
 }
 
-function sendPriceAlert(symbol, price, threshold) {
-  const message = `${symbol} is $${price.toFixed(2)}, above $${threshold.toFixed(2)}`;
+function isAsxMarketOpen(date = new Date()) {
+  const parts = Object.fromEntries(
+    asxTimeFormatter.formatToParts(date).map((part) => [part.type, part.value])
+  );
+  const weekday = parts.weekday;
+  const minutes = Number(parts.hour) * 60 + Number(parts.minute);
+
+  if (["Sat", "Sun"].includes(weekday)) {
+    return false;
+  }
+
+  return minutes >= ASX_MARKET_OPEN_MINUTES && minutes < ASX_MARKET_CLOSE_MINUTES;
+}
+
+function sendPriceAlert(messages) {
+  const message = messages.join(" | ");
   alertBanner.textContent = message;
   alertBanner.hidden = false;
   setStatus("Alert", "alerting");
@@ -107,24 +157,63 @@ async function checkPrice() {
     return;
   }
 
-  const { symbol, apiSymbol, apiKey, threshold } = activeConfig;
+  const { symbols, apiSymbols, apiKey, threshold, aboveThresholdBySymbol } = activeConfig;
+
+  if (!isAsxMarketOpen()) {
+    if (marketWasOpen !== false) {
+      addLog("ASX market is closed; waiting to check prices");
+    }
+    marketWasOpen = false;
+    checkedOutput.textContent = formatTime();
+    setStatus("Closed", "closed");
+    return;
+  }
+
+  if (marketWasOpen !== true) {
+    addLog("ASX market is open; checking prices");
+    marketWasOpen = true;
+  }
 
   try {
-    const price = await getLatestPrice(apiSymbol, apiKey);
+    const prices = await getLatestPrices(apiSymbols, apiKey);
     const checkedAt = formatTime();
+    const priceLines = [];
+    const newAlerts = [];
+    const aboveNow = [];
 
-    priceOutput.textContent = `$${price.toFixed(2)}`;
+    symbols.forEach((symbol, index) => {
+      const apiSymbol = apiSymbols[index];
+      const price = prices.get(apiSymbol);
+      if (!Number.isFinite(price)) {
+        addLog(`No price returned for ${symbol}`);
+        return;
+      }
+
+      priceLines.push(`${symbol}: $${price.toFixed(2)}`);
+      addLog(`${symbol}: $${price.toFixed(2)}`);
+
+      if (price > threshold) {
+        aboveNow.push(`${symbol} $${price.toFixed(2)}`);
+        if (!aboveThresholdBySymbol.get(symbol)) {
+          newAlerts.push(`${symbol} is $${price.toFixed(2)}, above $${threshold.toFixed(2)}`);
+          aboveThresholdBySymbol.set(symbol, true);
+        }
+      } else {
+        aboveThresholdBySymbol.set(symbol, false);
+      }
+    });
+
+    priceOutput.textContent = priceLines.join(" | ") || "--";
     checkedOutput.textContent = checkedAt;
-    addLog(`${symbol}: $${price.toFixed(2)}`);
 
-    if (price > threshold && !wasAboveThreshold) {
-      wasAboveThreshold = true;
-      sendPriceAlert(symbol, price, threshold);
-    } else if (price <= threshold) {
-      wasAboveThreshold = false;
-      alertBanner.hidden = true;
-      setStatus("Running", "running");
+    if (newAlerts.length > 0) {
+      sendPriceAlert(newAlerts);
+    } else if (aboveNow.length > 0) {
+      alertBanner.textContent = `Above threshold: ${aboveNow.join(" | ")}`;
+      alertBanner.hidden = false;
+      setStatus("Alert", "alerting");
     } else {
+      alertBanner.hidden = true;
       setStatus("Running", "running");
     }
   } catch (error) {
@@ -138,11 +227,11 @@ async function startMonitor(event) {
 
   stopMonitor(false);
 
-  const symbol = normaliseAsxSymbol(symbolInput.value);
-  const apiSymbol = toTwelveDataSymbol(symbol);
+  const symbols = normaliseAsxSymbols(symbolInput.value);
+  const apiSymbols = symbols.map(toTwelveDataSymbol);
   const apiKey = apiKeyInput.value.trim();
   const threshold = Number(thresholdInput.value || 74);
-  const intervalSeconds = Math.max(10, Number(intervalInput.value || 10));
+  const intervalSeconds = Math.max(60, Number(intervalInput.value || 60));
 
   if (!apiKey) {
     setStatus("Error");
@@ -150,18 +239,25 @@ async function startMonitor(event) {
     return;
   }
 
-  symbolInput.value = symbol;
+  symbolInput.value = symbols.join(", ");
   intervalInput.value = intervalSeconds;
   window.localStorage.setItem("twelveDataApiKey", apiKey);
-  activeConfig = { symbol, apiSymbol, apiKey, threshold, intervalSeconds };
-  wasAboveThreshold = false;
+  activeConfig = {
+    symbols,
+    apiSymbols,
+    apiKey,
+    threshold,
+    intervalSeconds,
+    aboveThresholdBySymbol: new Map(symbols.map((symbol) => [symbol, false]))
+  };
+  marketWasOpen = null;
 
   startButton.disabled = true;
   stopButton.disabled = false;
   alertBanner.hidden = true;
   setStatus("Running", "running");
 
-  addLog(`Started ${symbol}, above $${threshold.toFixed(2)}, every ${intervalSeconds}s`);
+  addLog(`Started ${symbols.join(", ")}, above $${threshold.toFixed(2)}, every ${intervalSeconds}s, ASX hours only`);
   await checkPrice();
   timerId = window.setInterval(checkPrice, intervalSeconds * 1000);
 }

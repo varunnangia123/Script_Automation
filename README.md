@@ -18,9 +18,10 @@ Open `index.html` in your browser.
 The page defaults to:
 
 ```text
-Symbol: XRO.AX
+Symbols: WTC.AX, XRO.AX
 Threshold: 74
-Interval: 10 seconds
+Interval: 60 seconds
+Schedule: ASX market hours only, Monday-Friday 10:00-16:00 Australia/Sydney
 ```
 
 The browser tab must stay open for monitoring to continue. GitHub Pages hosts static files only, so it cannot run checks after the tab is closed.
@@ -35,6 +36,6 @@ This version uses Twelve Data because GitHub Pages JavaScript needs a browser-ac
 
 The key is saved in your browser local storage only. Do not hard-code API keys into public GitHub files.
 
-Free API plans can rate-limit requests. A 10-second interval is 6 requests per minute for one stock while the tab is open.
+Free API plans can rate-limit requests. The default 60-second interval checks two stocks in a single batched request during ASX market hours, which is roughly 360 requests on a normal trading day while the tab is open.
 
 This web version shows alerts inside the page and does not request browser notification permission.
