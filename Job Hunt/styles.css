@@ -47,8 +47,7 @@ a {
 .top-bar,
 .query-band,
 .control-panel,
-.results-panel,
-.activity-panel {
+.results-panel {
   border: 1px solid var(--line);
   background: rgba(255, 250, 240, 0.86);
   box-shadow: var(--shadow);
@@ -178,21 +177,19 @@ h3 {
 
 .workspace-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 330px) minmax(0, 1fr) minmax(250px, 310px);
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
   gap: 14px;
   margin-top: 14px;
   align-items: start;
 }
 
 .control-panel,
-.results-panel,
-.activity-panel {
+.results-panel {
   border-radius: 8px;
   padding: 18px;
 }
 
-.control-panel,
-.activity-panel {
+.control-panel {
   position: sticky;
   top: 14px;
 }
@@ -222,6 +219,55 @@ label {
   font-size: 0.8rem;
   font-weight: 800;
   text-transform: uppercase;
+}
+
+.selector-group {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.selector-group legend {
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.checkbox-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.check-option {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--ink);
+  background: #fffdf7;
+  cursor: pointer;
+  font-size: 0.91rem;
+  font-weight: 800;
+  text-transform: none;
+}
+
+.check-option:has(input:checked) {
+  border-color: rgba(20, 108, 92, 0.42);
+  background: rgba(20, 108, 92, 0.1);
+}
+
+.check-option input {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  accent-color: var(--accent);
 }
 
 input,
@@ -363,51 +409,44 @@ textarea:focus {
 }
 
 .summary-block {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
   padding-top: 12px;
   border-top: 1px solid var(--line);
+}
+
+.company-logo {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(20, 108, 92, 0.1);
+}
+
+.company-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
+  background: #fffdf7;
+}
+
+.company-logo span {
+  color: var(--accent-strong);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 1rem;
+  font-weight: 800;
 }
 
 .summary-block p:last-child {
   margin-bottom: 0;
   color: #2d3934;
   line-height: 1.5;
-}
-
-.activity-log {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.activity-log li {
-  display: grid;
-  gap: 5px;
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fffdf7;
-  font-size: 0.9rem;
-}
-
-.activity-log li[data-state="ok"] {
-  border-left: 4px solid var(--green);
-}
-
-.activity-log li[data-state="warn"] {
-  border-left: 4px solid var(--amber);
-}
-
-.activity-log li[data-state="error"] {
-  border-left: 4px solid var(--red);
-}
-
-.log-time {
-  color: var(--muted);
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 0.72rem;
-  font-weight: 700;
 }
 
 .empty-state {
@@ -450,10 +489,6 @@ svg {
     grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
   }
 
-  .activity-panel {
-    position: static;
-    grid-column: 1 / -1;
-  }
 }
 
 @media (max-width: 820px) {
@@ -465,7 +500,8 @@ svg {
   .run-strip,
   .workspace-grid,
   .job-details,
-  .button-row {
+  .button-row,
+  .summary-block {
     grid-template-columns: 1fr;
   }
 

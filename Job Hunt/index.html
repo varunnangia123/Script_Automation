@@ -40,7 +40,7 @@
     <section class="query-band" aria-labelledby="query-title">
       <div>
         <p class="eyebrow">Requirements</p>
-        <h2 id="query-title">Power BI report developer or data analyst contracts</h2>
+        <h2 id="query-title">Power BI, data, business and portfolio contract matches</h2>
       </div>
       <div id="requirement-tags" class="tag-row" aria-live="polite"></div>
     </section>
@@ -53,15 +53,15 @@
         </div>
 
         <form id="settings-form" class="settings-form">
-          <label>
-            Keywords
-            <textarea id="keywords-input" name="keywords" rows="4" spellcheck="false"></textarea>
-          </label>
+          <fieldset class="selector-group">
+            <legend>Role Conditions</legend>
+            <div id="role-options" class="checkbox-grid"></div>
+          </fieldset>
 
-          <label>
-            Contract Terms
-            <textarea id="terms-input" name="terms" rows="3" spellcheck="false"></textarea>
-          </label>
+          <fieldset class="selector-group">
+            <legend>Contract Conditions</legend>
+            <div id="contract-options" class="checkbox-grid"></div>
+          </fieldset>
 
           <label>
             Location
@@ -109,14 +109,6 @@
         </div>
         <div id="job-list" class="job-list" aria-live="polite"></div>
       </section>
-
-      <aside class="activity-panel" aria-labelledby="activity-title">
-        <div class="panel-heading compact">
-          <p class="eyebrow">Activity</p>
-          <h2 id="activity-title">Run Log</h2>
-        </div>
-        <ol id="activity-log" class="activity-log" aria-live="polite"></ol>
-      </aside>
     </div>
   </main>
 

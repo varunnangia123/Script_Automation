@@ -1,6 +1,6 @@
 # Job Hunt Monitor
 
-A static GitHub Pages dashboard for monitoring contract or fixed monthly Power BI report developer and data analyst roles. It refreshes every 10 seconds by default, filters jobs against saved requirements, and shows a short description summary under each matched job.
+A static GitHub Pages dashboard for monitoring contract, fixed term, 3 month, 6 month, and monthly Power BI, data, business analyst, and portfolio analyst roles. It refreshes every 10 seconds by default, filters jobs against checkbox-selected requirements, and shows a short description summary with the company logo under each matched job.
 
 ## Important SEEK Note
 
@@ -16,7 +16,7 @@ Use a source endpoint only if you have permission to access and reuse the job da
 - `index.html` - GitHub Pages entry point.
 - `styles.css` - Responsive dashboard styling.
 - `app.js` - UI state, polling loop, rendering, and events.
-- `config.js` - Defaults, polling limits, and demo jobs.
+- `config.js` - Hardcoded checkbox conditions, defaults, polling limits, and demo jobs.
 - `seek-service.js` - SEEK search URL builder and source endpoint normalisation.
 - `summarizer.js` - Requirement parsing, match scoring, and description summaries.
 - `storage.js` - Local browser storage for settings and seen jobs.
@@ -36,12 +36,13 @@ Recommended job fields:
   "workType": "Contract/Temp",
   "salary": "$850 per day",
   "listedAt": "Today",
+  "logoUrl": "https://example.com/logo.png",
   "url": "https://www.seek.com.au/job/12345",
   "description": "Build Power BI dashboards, tune DAX measures, and deliver monthly reporting packs."
 }
 ```
 
-The app also recognises common alternatives such as `jobTitle`, `companyName`, `jobType`, `employmentType`, `displaySalary`, `teaser`, `summary`, and `jobDescription`.
+The app also recognises common alternatives such as `jobTitle`, `companyName`, `jobType`, `employmentType`, `displaySalary`, `companyLogo`, `companyLogoUrl`, `companyDomain`, `teaser`, `summary`, and `jobDescription`. If no logo is supplied, the card shows company initials.
 
 ## Run Locally
 

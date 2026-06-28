@@ -17,8 +17,21 @@ function absoluteUrl(url) {
   return url.startsWith("http") ? url : `https://www.seek.com.au${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
+function logoFromDomain(domain) {
+  const cleanDomain = String(domain || "")
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/\/.*$/, "")
+    .trim();
+
+  return cleanDomain ? `https://logo.clearbit.com/${cleanDomain}` : "";
+}
+
 export function buildSeekSearchUrl(settings) {
-  const keywordQuery = [...settings.keywords, ...settings.contractTerms].join(" ");
+  const keywordQuery = [
+    ...(settings.roleLabels || settings.keywords),
+    ...(settings.contractLabels || settings.contractTerms)
+  ].join(" ");
   const baseUrl = "https://www.seek.com.au/jobs";
   const params = new URLSearchParams();
 
@@ -36,13 +49,25 @@ export function buildSeekSearchUrl(settings) {
 function normalizeJob(rawJob, index) {
   const id = pickFirst(rawJob.id, rawJob.jobId, rawJob.guid, rawJob.listingId, rawJob.url, rawJob.link, `job-${index}`);
   const title = pickFirst(rawJob.title, rawJob.jobTitle, rawJob.positionTitle, "Untitled role");
-  const company = pickFirst(rawJob.company, rawJob.companyName, rawJob.advertiser?.description, rawJob.advertiser?.name, "Unknown company");
+  const company = pickFirst(rawJob.companyName, rawJob.company?.name, rawJob.company?.displayName, rawJob.company, rawJob.advertiser?.description, rawJob.advertiser?.name, "Unknown company");
   const location = pickFirst(rawJob.location, rawJob.locationName, rawJob.locations?.[0]?.label, rawJob.address, "Location not supplied");
   const workType = pickFirst(rawJob.workType, rawJob.workTypeLabel, rawJob.jobType, rawJob.employmentType, "Work type not supplied");
   const salary = pickFirst(rawJob.salary, rawJob.salaryLabel, rawJob.displaySalary, rawJob.remuneration, "Salary not supplied");
   const listedAt = pickFirst(rawJob.listedAt, rawJob.listedDate, rawJob.dateListed, rawJob.createdAt, rawJob.postedAt, "Date not supplied");
   const description = pickFirst(rawJob.description, rawJob.jobDescription, rawJob.teaser, rawJob.summary, rawJob.content, rawJob.abstract);
   const url = absoluteUrl(pickFirst(rawJob.url, rawJob.link, rawJob.jobUrl, rawJob.adDetails?.url));
+  const companyDomain = pickFirst(rawJob.companyDomain, rawJob.company?.domain, rawJob.advertiser?.domain);
+  const logoUrl = absoluteUrl(pickFirst(
+    rawJob.logoUrl,
+    rawJob.companyLogo,
+    rawJob.companyLogoUrl,
+    rawJob.logo?.url,
+    rawJob.company?.logoUrl,
+    rawJob.company?.logo,
+    rawJob.advertiser?.logoUrl,
+    rawJob.advertiser?.logo?.url,
+    logoFromDomain(companyDomain)
+  ));
 
   return {
     id: String(id),
@@ -53,6 +78,7 @@ function normalizeJob(rawJob, index) {
     salary,
     listedAt,
     description,
+    logoUrl,
     url,
     source: pickFirst(rawJob.source, "SEEK")
   };
@@ -101,7 +127,7 @@ export async function fetchMatchingJobs(settings) {
 }
 
 export function buildEndpointHint(settings) {
-  const query = encodeQuery([...settings.keywords, ...settings.contractTerms].join(" "));
+  const query = encodeQuery([...(settings.roleLabels || settings.keywords), ...(settings.contractLabels || settings.contractTerms)].join(" "));
   const location = encodeQuery(settings.location);
   return `keywords=${query}&where=${location}`;
 }
