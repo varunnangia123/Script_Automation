@@ -24,9 +24,15 @@
   box-sizing: border-box;
 }
 
+html {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
-  min-height: 100vh;
+  height: 100%;
   margin: 0;
+  overflow: hidden;
   background:
     linear-gradient(135deg, rgba(12, 116, 109, 0.16), transparent 34%),
     linear-gradient(315deg, rgba(186, 104, 49, 0.12), transparent 38%),
@@ -36,9 +42,12 @@ body {
 
 .dashboard-shell {
   width: min(1620px, calc(100% - 20px));
-  min-height: 100vh;
+  height: 100vh;
   margin: 0 auto;
   padding: 10px 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
 }
 
 .top-bar {
@@ -47,6 +56,7 @@ body {
   gap: 12px;
   align-items: end;
   margin-bottom: 8px;
+  min-height: 0;
 }
 
 .eyebrow {
@@ -66,7 +76,7 @@ h2 {
 }
 
 h1 {
-  font-size: clamp(2rem, 4vw, 3.6rem);
+  font-size: clamp(1.7rem, 3.4vw, 3rem);
 }
 
 h2 {
@@ -92,8 +102,8 @@ h2 {
 .run-strip div {
   display: grid;
   gap: 4px;
-  min-height: 58px;
-  padding: 9px 10px;
+  min-height: 50px;
+  padding: 7px 9px;
   background: rgba(255, 255, 255, 0.74);
 }
 
@@ -135,10 +145,14 @@ h2 {
   grid-template-columns: minmax(0, 1fr) minmax(290px, 340px);
   gap: 10px;
   align-items: stretch;
+  min-height: 0;
 }
 
 .stock-board {
   min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .section-heading {
@@ -155,14 +169,17 @@ h2 {
 
 .stock-grid {
   display: grid;
-  grid-template-columns: repeat(10, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  min-height: 0;
+  overflow: hidden;
   gap: 8px;
 }
 
 .stock-tile {
   position: relative;
   display: flex;
-  aspect-ratio: 1 / 1;
+  min-height: 0;
   min-width: 0;
   flex-direction: column;
   justify-content: space-between;
@@ -223,7 +240,7 @@ h2 {
   display: block;
   margin-bottom: 5px;
   font-family: "IBM Plex Mono", monospace;
-  font-size: clamp(1.05rem, 1.55vw, 1.55rem);
+  font-size: clamp(1rem, 1.35vw, 1.35rem);
   line-height: 1;
   letter-spacing: 0;
 }
@@ -248,9 +265,11 @@ h2 {
 
 .side-rail {
   display: grid;
-  min-height: calc(100vh - 86px);
+  height: 100%;
+  min-height: 0;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 10px;
+  overflow: hidden;
 }
 
 .alert-panel,
@@ -297,12 +316,13 @@ h2 {
 .stream-panel {
   display: flex;
   min-height: 0;
+  overflow: hidden;
   flex-direction: column;
 }
 
 .stream-log {
+  flex: 1 1 auto;
   min-height: 0;
-  max-height: 100%;
   margin: 8px 0 0;
   padding: 0;
   overflow: auto;
@@ -347,6 +367,17 @@ h2 {
 }
 
 @media (max-width: 1080px) {
+  html,
+  body {
+    overflow: auto;
+  }
+
+  .dashboard-shell {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
   .top-bar,
   .dashboard-layout {
     grid-template-columns: 1fr;
@@ -359,7 +390,8 @@ h2 {
   }
 
   .stock-grid {
-    grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: auto;
   }
 }
 

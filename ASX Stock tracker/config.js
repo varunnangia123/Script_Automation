@@ -14,16 +14,16 @@ export const WATCHLIST = [
   { symbol: "VAS.AX", name: "Vanguard Australian Shares ETF" },
   { symbol: "PME.AX", name: "Pro Medicus" },
   { symbol: "QAN.AX", name: "Qantas Airways" },
-  { symbol: "NAB.AX", name: "National Australia Bank" },
-  { symbol: "WBC.AX", name: "Westpac" },
-  { symbol: "ANZ.AX", name: "ANZ Group" },
-  { symbol: "CSL.AX", name: "CSL" },
+  { symbol: "BXB.AX", name: "Brambles" },
+  { symbol: "JHX.AX", name: "James Hardie" },
+  { symbol: "COL.AX", name: "Coles Group" },
+  { symbol: "WDS.AX", name: "Woodside Energy" },
   { symbol: "MQG.AX", name: "Macquarie Group" },
   { symbol: "WES.AX", name: "Wesfarmers" },
-  { symbol: "WOW.AX", name: "Woolworths Group" },
-  { symbol: "GMG.AX", name: "Goodman Group" },
-  { symbol: "TLS.AX", name: "Telstra Group" },
-  { symbol: "FMG.AX", name: "Fortescue" }
+  { symbol: "JBH.AX", name: "JB Hi-Fi" },
+  { symbol: "^IXIC", name: "Nasdaq Composite" },
+  { symbol: "^DJI", name: "Dow Jones" },
+  { symbol: "^GSPC", name: "S&P 500" }
 ];
 
 export const ALERT_RULES = [
