@@ -1,4 +1,4 @@
-import { QUOTE_PROXY_PREFIX, QUOTE_TIMEOUT_MS } from "./config.js?v=20260628-6";
+import { QUOTE_PROXY_PREFIX, QUOTE_TIMEOUT_MS } from "./config.js?v=20260628-7";
 
 function yahooChartUrl(symbol) {
   return `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1m`;
@@ -45,10 +45,13 @@ function chartResults(data) {
 function priceFromChartResult(result) {
   const meta = result?.meta ?? {};
   const metaPrice = Number(meta.regularMarketPrice);
+  const previousClose = Number(meta.previousClose ?? meta.chartPreviousClose);
 
   if (Number.isFinite(metaPrice) && metaPrice > 0) {
     return {
       price: metaPrice,
+      previousClose: Number.isFinite(previousClose) && previousClose > 0 ? previousClose : null,
+      changePercent: percentChange(metaPrice, previousClose),
       currency: meta.currency || "AUD",
       marketTime: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000) : null
     };
@@ -59,12 +62,22 @@ function priceFromChartResult(result) {
   if (closePrice !== null) {
     return {
       price: closePrice,
+      previousClose: Number.isFinite(previousClose) && previousClose > 0 ? previousClose : null,
+      changePercent: percentChange(closePrice, previousClose),
       currency: meta.currency || "AUD",
       marketTime: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000) : null
     };
   }
 
   throw new Error("No usable price returned");
+}
+
+function percentChange(price, previousClose) {
+  if (!Number.isFinite(price) || !Number.isFinite(previousClose) || previousClose <= 0) {
+    return null;
+  }
+
+  return ((price - previousClose) / previousClose) * 100;
 }
 
 function sparkResults(data) {

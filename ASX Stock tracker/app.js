@@ -1,5 +1,5 @@
-import { ALERT_RULES, CHECK_INTERVAL_SECONDS, MAX_LOG_ENTRIES, WATCHLIST } from "./config.js?v=20260628-6";
-import { fetchQuotes } from "./quote-service.js?v=20260628-6";
+import { ALERT_RULES, CHECK_INTERVAL_SECONDS, MAX_LOG_ENTRIES, WATCHLIST } from "./config.js?v=20260628-7";
+import { fetchQuotes } from "./quote-service.js?v=20260628-7";
 
 const stockGrid = document.querySelector("#stock-grid");
 const alertList = document.querySelector("#alert-list");
@@ -25,6 +25,15 @@ function formatTime(date = new Date()) {
 
 function formatPrice(value) {
   return `$${Number(value).toFixed(2)}`;
+}
+
+function formatPercent(value) {
+  if (!Number.isFinite(value)) {
+    return "--";
+  }
+
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value.toFixed(2)}%`;
 }
 
 function setRunStatus(text, state = "idle") {
@@ -64,6 +73,7 @@ function renderStockTiles() {
       </div>
       <div>
         <strong class="stock-price">--</strong>
+        <span class="stock-change">--</span>
         <span class="stock-name">${stock.name}</span>
       </div>
       <div class="tile-footline">
@@ -120,7 +130,10 @@ function updateTile(quote) {
 
   quoteState.set(quote.symbol, quote);
   tile.classList.remove("has-error");
+  tile.classList.toggle("is-up", Number(quote.changePercent) > 0);
+  tile.classList.toggle("is-down", Number(quote.changePercent) < 0);
   tile.querySelector(".stock-price").textContent = formatPrice(quote.price);
+  tile.querySelector(".stock-change").textContent = formatPercent(quote.changePercent);
   tile.querySelector(".stock-status").textContent = "Read";
   tile.querySelector(".stock-time").textContent = formatTime(quote.readAt);
 }
@@ -132,6 +145,7 @@ function updateTileError(symbol, error) {
   }
 
   tile.classList.add("has-error");
+  tile.classList.remove("is-up", "is-down");
   tile.querySelector(".stock-status").textContent = error.message;
   tile.querySelector(".stock-time").textContent = formatTime();
 }
