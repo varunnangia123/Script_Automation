@@ -1,5 +1,5 @@
 export const CHECK_INTERVAL_SECONDS = 10;
-export const QUOTE_TIMEOUT_MS = 12000;
+export const QUOTE_TIMEOUT_MS = 20000;
 export const MAX_LOG_ENTRIES = 120;
 export const QUOTE_PROXY_PREFIX = "https://r.jina.ai/http://";
 

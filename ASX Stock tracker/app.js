@@ -1,5 +1,5 @@
-import { ALERT_RULES, CHECK_INTERVAL_SECONDS, MAX_LOG_ENTRIES, WATCHLIST } from "./config.js";
-import { fetchQuote } from "./quote-service.js";
+import { ALERT_RULES, CHECK_INTERVAL_SECONDS, MAX_LOG_ENTRIES, WATCHLIST } from "./config.js?v=20260628-6";
+import { fetchQuotes } from "./quote-service.js?v=20260628-6";
 
 const stockGrid = document.querySelector("#stock-grid");
 const alertList = document.querySelector("#alert-list");
@@ -151,19 +151,6 @@ function updateAlerts() {
   });
 }
 
-async function readOneStock(stock) {
-  try {
-    const quote = await fetchQuote(stock.symbol);
-    updateTile(quote);
-    addStream(`${stock.symbol} ${formatPrice(quote.price)}`, "ok");
-    return { ok: true };
-  } catch (error) {
-    updateTileError(stock.symbol, error);
-    addStream(`${stock.symbol} failed: ${error.message}`, "error");
-    return { ok: false };
-  }
-}
-
 async function readCycle() {
   if (isReading) {
     return;
@@ -175,9 +162,31 @@ async function readCycle() {
   flashTiles();
 
   const startedAt = performance.now();
-  const results = await Promise.all(WATCHLIST.map(readOneStock));
-  const okCount = results.filter((result) => result.ok).length;
-  const failedCount = results.length - okCount;
+  let okCount = 0;
+  let failedCount = 0;
+
+  try {
+    const quotes = await fetchQuotes(WATCHLIST.map((stock) => stock.symbol));
+
+    WATCHLIST.forEach((stock) => {
+      const quote = quotes.get(stock.symbol);
+      if (!quote) {
+        failedCount += 1;
+        updateTileError(stock.symbol, new Error("No quote returned"));
+        addStream(`${stock.symbol} failed: No quote returned`, "error");
+        return;
+      }
+
+      okCount += 1;
+      updateTile(quote);
+      addStream(`${stock.symbol} ${formatPrice(quote.price)}`, "ok");
+    });
+  } catch (error) {
+    failedCount = WATCHLIST.length;
+    WATCHLIST.forEach((stock) => updateTileError(stock.symbol, error));
+    addStream(`Batch quote failed: ${error.message}`, "error");
+  }
+
   const elapsedSeconds = ((performance.now() - startedAt) / 1000).toFixed(1);
 
   updateAlerts();
@@ -196,7 +205,7 @@ function scheduleNextCycle() {
 function startDashboard() {
   renderStockTiles();
   renderAlerts();
-  addStream(`Starting ${WATCHLIST.length} symbols, every ${CHECK_INTERVAL_SECONDS}s`);
+  addStream(`Starting ${WATCHLIST.length} symbols, every ${CHECK_INTERVAL_SECONDS}s, one batch request per cycle`);
   readCycle();
 }
 

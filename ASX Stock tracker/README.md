@@ -24,6 +24,6 @@ WTC.AX > $37
 
 ## Data Source
 
-The page reads Yahoo Finance chart data through the public Jina Reader route so it can run on GitHub Pages without a backend server or API key.
+The page reads Yahoo Finance spark data through the public Jina Reader route so it can run on GitHub Pages without a backend server or API key. All symbols are fetched in one batch request per 10-second cycle.
 
 The tracker checks every 10 seconds while the browser tab is open. Public no-key routes can rate-limit or change without notice.
