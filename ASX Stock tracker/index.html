@@ -3,93 +3,63 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ASX Price Monitor</title>
-  <link rel="stylesheet" href="styles.css?v=20260626-7">
+  <title>ASX Stock Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=20260628-1">
+  <script type="module" src="app.js?v=20260628-1"></script>
 </head>
 <body>
-  <main class="app-shell">
-    <section class="monitor-panel" aria-labelledby="app-title">
-      <div class="panel-header">
-        <div>
-          <p class="eyebrow">ASX Monitor</p>
-          <h1 id="app-title">Price Alert</h1>
-        </div>
-        <div class="status-pill" id="status-pill">Idle</div>
+  <main class="dashboard-shell">
+    <header class="top-bar">
+      <div>
+        <p class="eyebrow">ASX Tracker</p>
+        <h1>Live Watch Grid</h1>
       </div>
-
-      <form id="settings-form" class="settings-grid">
-        <label>
-          <span>Symbols</span>
-          <input id="symbol-input" name="symbol" value="WTC, XRO" autocomplete="off" spellcheck="false">
-        </label>
-
-        <label>
-          <span>Above</span>
-          <input id="threshold-input" name="threshold" type="number" value="74" min="0" step="0.01">
-        </label>
-
-        <label>
-          <span>Every</span>
-          <input id="interval-input" name="interval" type="number" value="10" min="10" step="1">
-        </label>
-
-        <div class="actions" aria-label="Monitor controls">
-          <button id="start-button" type="submit" title="Start monitoring" aria-label="Start monitoring">
-            <span aria-hidden="true">▶</span>
-          </button>
-          <button id="stop-button" type="button" title="Stop monitoring" aria-label="Stop monitoring" disabled>
-            <span aria-hidden="true">■</span>
-          </button>
-        </div>
-      </form>
-
-      <div class="price-strip" aria-live="polite">
+      <div class="run-strip" aria-live="polite">
         <div>
-          <span class="metric-label">Last Prices</span>
-          <strong id="price-output">--</strong>
+          <span>Status</span>
+          <strong id="run-status">Starting</strong>
         </div>
         <div>
-          <span class="metric-label">Checked</span>
-          <strong id="checked-output">--</strong>
+          <span>Cycle</span>
+          <strong>10s</strong>
+        </div>
+        <div>
+          <span>Last Read</span>
+          <strong id="last-read-output">--</strong>
         </div>
       </div>
+    </header>
 
-      <div id="alert-banner" class="alert-banner" hidden></div>
-
-      <section class="log-panel" aria-label="Monitor log">
-        <div class="log-header">
-          <span>Log</span>
-          <button id="clear-log-button" type="button" title="Clear log" aria-label="Clear log">×</button>
+    <div class="dashboard-layout">
+      <section class="stock-board" aria-labelledby="stock-grid-title">
+        <div class="section-heading">
+          <p class="eyebrow">Watchlist</p>
+          <h2 id="stock-grid-title">20 Stocks</h2>
         </div>
-        <ol id="log-output"></ol>
+        <div id="stock-grid" class="stock-grid" aria-live="polite"></div>
       </section>
-    </section>
 
-    <section class="sharepoint-panel" aria-labelledby="sharepoint-title">
-        <div class="panel-header">
-          <div>
-            <p class="eyebrow">SharePoint</p>
-            <h2 id="sharepoint-title">List Reader</h2>
+      <aside class="side-rail">
+        <section class="alert-panel" aria-labelledby="alert-title">
+          <div class="section-heading compact">
+            <p class="eyebrow">Thresholds</p>
+            <h2 id="alert-title">Alerts</h2>
           </div>
-          <div class="status-pill" id="sharepoint-status">Idle</div>
-        </div>
+          <div id="alert-list" class="alert-list" aria-live="polite"></div>
+        </section>
 
-        <form id="sharepoint-form" class="sharepoint-form">
-          <label>
-            <span>List Link</span>
-            <input id="sharepoint-link-input" name="sharepointLink" type="url" autocomplete="off" spellcheck="false">
-          </label>
-
-          <button id="sharepoint-load-button" type="submit">Load</button>
-        </form>
-
-        <div id="sharepoint-message" class="sharepoint-message" hidden></div>
-        <div class="sharepoint-table-wrap">
-          <table id="sharepoint-table"></table>
-        </div>
-    </section>
+        <section class="stream-panel" aria-labelledby="stream-title">
+          <div class="section-heading compact">
+            <p class="eyebrow">Right Now</p>
+            <h2 id="stream-title">Data Stream</h2>
+          </div>
+          <ol id="stream-log" class="stream-log" aria-live="polite"></ol>
+        </section>
+      </aside>
+    </div>
   </main>
-
-  <script src="app.js?v=20260626-7"></script>
 </body>
 </html>

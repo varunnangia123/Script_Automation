@@ -1,43 +1,27 @@
-# ASX Price Monitor Web
+# ASX Stock Tracker
 
-A static browser-based ASX price monitor that can be hosted on GitHub Pages.
+A static GitHub Pages dashboard that watches 20 ASX symbols with no API keys.
 
-## Run Locally
+## Watchlist
 
-Open `index.html` in your browser.
-
-## GitHub Pages
-
-1. Push this folder to a GitHub repository.
-2. In the repository, open Settings > Pages.
-3. Select the branch and folder that contains `index.html`.
-4. Open the published GitHub Pages URL.
-
-## Default Monitor
-
-The page defaults to:
+The grid includes:
 
 ```text
-Symbols: WTC.AX, XRO.AX
-Threshold: 74
-Interval: 10 seconds
-Schedule: runs every 10 seconds while the page is open
+CBA.AX, WTC.AX, RIO.AX, BHP.AX, NEU.AX, XRO.AX, IVV.AX, VAS.AX, PME.AX, QAN.AX,
+NAB.AX, WBC.AX, ANZ.AX, CSL.AX, MQG.AX, WES.AX, WOW.AX, GMG.AX, TLS.AX, FMG.AX
 ```
 
-The browser tab must stay open for monitoring to continue. GitHub Pages hosts static files only, so it cannot run checks after the tab is closed.
+## Alerts
+
+The right-side alert panel watches:
+
+```text
+XRO.AX > $74
+WTC.AX > $37
+```
 
 ## Data Source
 
-This version does not use API keys.
+The page reads Yahoo Finance chart data through the public Jina Reader route so it can run on GitHub Pages without a backend server or API key.
 
-The page reads Yahoo Finance chart data through the public Jina Reader route so it can run from GitHub Pages without a backend server.
-
-The default 10-second interval checks two stocks while the tab is open. Public no-key routes can rate-limit or change without notice.
-
-This web version shows alerts inside the page and does not request browser notification permission.
-
-## SharePoint List Reader
-
-The page has a SharePoint List Reader section. Paste a SharePoint list URL, JSON URL, or CSV export URL and press Load.
-
-Protected SharePoint lists may be blocked by Microsoft sign-in, CORS, or tenant policy when loaded from GitHub Pages. In that case, use a JSON/CSV export link that allows browser access, or use a small authenticated backend/Microsoft Graph app.
+The tracker checks every 10 seconds while the browser tab is open. Public no-key routes can rate-limit or change without notice.
