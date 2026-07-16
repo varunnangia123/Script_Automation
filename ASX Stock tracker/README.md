@@ -15,14 +15,9 @@ The grid is arranged as 4 columns by 5 rows. The page is fixed to one desktop vi
 
 ## Alerts
 
-The right-side alert panel watches:
+The header checkbox selector lets you choose up to 4 stocks. Each selected stock appears in the right-side threshold panel with its own target price field and a progress bar against that target, with green rows for crossed thresholds and red rows for targets that have not been reached.
 
-```text
-XRO.AX > $74
-WTC.AX > $37
-```
-
-Each tile shows the latest price and percentage change versus the previous close.
+Each tile shows the latest price and percentage change versus the previous close. The data stream shows cycle summaries only, not every per-symbol quote message.
 
 ## Data Source
 

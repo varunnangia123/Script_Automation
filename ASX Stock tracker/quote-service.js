@@ -1,4 +1,4 @@
-import { QUOTE_PROXY_PREFIX, QUOTE_TIMEOUT_MS } from "./config.js?v=20260628-7";
+import { QUOTE_PROXY_PREFIX, QUOTE_TIMEOUT_MS } from "./config.js?v=20260716-8";
 
 function yahooChartUrl(symbol) {
   return `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1m`;

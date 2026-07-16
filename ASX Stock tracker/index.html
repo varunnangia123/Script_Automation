@@ -7,15 +7,24 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260628-7">
-  <script type="module" src="app.js?v=20260628-7"></script>
+  <link rel="stylesheet" href="styles.css?v=20260716-12">
+  <script type="module" src="app.js?v=20260716-8"></script>
 </head>
 <body>
   <main class="dashboard-shell">
     <header class="top-bar">
-      <div>
-        <p class="eyebrow">ASX Tracker</p>
-        <h1>Live Watch Grid</h1>
+      <div class="title-panel">
+        <div class="title-copy">
+          <p class="eyebrow">ASX Tracker</p>
+          <h1>Live Watch Grid</h1>
+        </div>
+        <div class="threshold-picker" aria-label="Select threshold stocks">
+          <details class="stock-checklist-menu">
+            <summary id="stock-checklist-summary">Choose stocks</summary>
+            <div id="stock-checklist" class="stock-checklist" role="group" aria-label="Threshold stock checklist"></div>
+          </details>
+          <span id="alert-count" class="threshold-count" aria-live="polite">0/4</span>
+        </div>
       </div>
       <div class="run-strip" aria-live="polite">
         <div>

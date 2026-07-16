@@ -26,7 +26,3 @@ export const WATCHLIST = [
   { symbol: "^GSPC", name: "S&P 500" }
 ];
 
-export const ALERT_RULES = [
-  { symbol: "XRO.AX", threshold: 74 },
-  { symbol: "WTC.AX", threshold: 37 }
-];
