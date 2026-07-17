@@ -622,9 +622,9 @@ h2 {
   z-index: 2;
   top: 50%;
   left: 0;
-  min-width: 30px;
-  max-width: 52px;
-  padding: 1px 5px;
+  width: 19.5px;
+  height: 10px;
+  padding: 0;
   border-radius: 999px;
   background: #2479d6;
   color: #fff;
@@ -640,7 +640,7 @@ h2 {
 
 .alert-row .threshold-value {
   color: #fff;
-  font-size: 0.5rem;
+  font-size: 0;
 }
 
 .threshold-meta {

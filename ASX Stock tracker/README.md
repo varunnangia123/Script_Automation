@@ -8,7 +8,7 @@ The grid includes:
 
 ```text
 CBA.AX, WTC.AX, RIO.AX, BHP.AX, NEU.AX, XRO.AX, IVV.AX, VAS.AX, PME.AX, QAN.AX,
-BXB.AX, JHX.AX, COL.AX, WDS.AX, MQG.AX, WES.AX, JBH.AX, ^IXIC, ^DJI, ^GSPC
+BXB.AX, JHX.AX, COL.AX, WDS.AX, MQG.AX, WES.AX, JBH.AX, ASX.AX, SEK.AX, CSL.AX
 ```
 
 The grid is arranged as 4 columns by 5 rows. The page is fixed to one desktop viewport, with scrolling isolated to the data stream panel.

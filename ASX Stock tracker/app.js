@@ -1,5 +1,5 @@
-import { CHECK_INTERVAL_SECONDS, MAX_LOG_ENTRIES, WATCHLIST } from "./config.js?v=20260716-8";
-import { fetchQuotes } from "./quote-service.js?v=20260716-8";
+import { CHECK_INTERVAL_SECONDS, MAX_LOG_ENTRIES, WATCHLIST } from "./config.js?v=20260717-1";
+import { fetchQuotes } from "./quote-service.js?v=20260717-1";
 
 const stockGrid = document.querySelector("#stock-grid");
 const alertList = document.querySelector("#alert-list");
@@ -182,7 +182,7 @@ function renderAlerts() {
       </div>
       <div class="threshold-track" role="meter" aria-label="${rule.symbol} threshold progress" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
         <span class="threshold-fill"></span>
-        <span class="threshold-value">--</span>
+        <span class="threshold-value" aria-hidden="true"></span>
       </div>
       <div class="threshold-meta">
         <span class="alert-price">Latest --</span>
@@ -338,7 +338,7 @@ function updateAlerts() {
       row.querySelector(".alert-price").textContent = quote ? `Latest ${formatPrice(quote.price)}` : "Latest --";
       row.querySelector(".alert-gap").textContent = "Enter target price";
       row.querySelector(".threshold-fill").style.width = "0%";
-      row.querySelector(".threshold-value").textContent = quote ? formatPrice(quote.price) : "--";
+      row.querySelector(".threshold-value").textContent = "";
       row.querySelector(".threshold-value").style.left = "0%";
 
       const meter = row.querySelector(".threshold-track");
@@ -353,7 +353,7 @@ function updateAlerts() {
       row.querySelector(".alert-price").textContent = "Latest --";
       row.querySelector(".alert-gap").textContent = `Target ${formatPrice(threshold)}`;
       row.querySelector(".threshold-fill").style.width = "0%";
-      row.querySelector(".threshold-value").textContent = "--";
+      row.querySelector(".threshold-value").textContent = "";
       row.querySelector(".threshold-value").style.left = "0%";
 
       const meter = row.querySelector(".threshold-track");
@@ -370,7 +370,7 @@ function updateAlerts() {
     row.querySelector(".alert-price").textContent = `Latest ${formatPrice(quote.price)}`;
     row.querySelector(".alert-gap").textContent = `${formatThresholdGap(quote.price, threshold)} (${formatThresholdPercent(quote.price, threshold)})`;
     row.querySelector(".threshold-fill").style.width = `${progress}%`;
-    row.querySelector(".threshold-value").textContent = formatPrice(quote.price);
+    row.querySelector(".threshold-value").textContent = "";
     row.querySelector(".threshold-value").style.left = `${progress}%`;
 
     const meter = row.querySelector(".threshold-track");

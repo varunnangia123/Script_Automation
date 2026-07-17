@@ -21,8 +21,8 @@ export const WATCHLIST = [
   { symbol: "MQG.AX", name: "Macquarie Group" },
   { symbol: "WES.AX", name: "Wesfarmers" },
   { symbol: "JBH.AX", name: "JB Hi-Fi" },
-  { symbol: "^IXIC", name: "Nasdaq Composite" },
-  { symbol: "^DJI", name: "Dow Jones" },
-  { symbol: "^GSPC", name: "S&P 500" }
+  { symbol: "ASX.AX", name: "ASX Limited" },
+  { symbol: "SEK.AX", name: "SEEK" },
+  { symbol: "CSL.AX", name: "CSL" }
 ];
 
